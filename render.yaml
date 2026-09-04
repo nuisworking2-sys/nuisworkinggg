@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: shorts-factory-web
+    runtime: docker
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_TTS_MODEL
+        value: gemini-3.1-flash-tts-preview
+      - key: GEMINI_TEXT_MODEL
+        value: gemini-3.7-flash
+      - key: GEMINI_IMAGE_MODEL
+        value: gemini-3.1-flash-lite-image
+      - key: GEMINI_IMAGE_ASPECT_RATIO
+        value: 1:1
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_TEXT_MODEL
+        value: gpt-5.6-luna
+      - key: OPENAI_IMAGE_MODEL
+        value: gpt-image-2
+      - key: OPENAI_IMAGE_QUALITY
+        value: medium

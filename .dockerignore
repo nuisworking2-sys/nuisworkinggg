@@ -1,0 +1,11 @@
+.git
+.gitignore
+**/__pycache__
+**/*.pyc
+server/.venv
+.venv-test
+.pytest_cache
+tests
+server/data/batches/*
+server/.env
+*.zip

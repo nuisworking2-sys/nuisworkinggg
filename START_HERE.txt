@@ -1,0 +1,23 @@
+[숏폼 자동 제작 웹사이트 - 시작 순서]
+
+1) 압축을 푼다.
+2) ffmpeg가 설치되어 있는지 확인한다.
+3) server\.env.example 를 server\.env 로 복사한다.
+4) 서버에 키를 고정하고 싶으면 server\.env 에 GEMINI_API_KEY / OPENAI_API_KEY 를 넣는다.
+5) 아니면 웹사이트 첫 화면의 API 키 입력창에 직접 넣어도 된다.
+6) setup_web.ps1 실행 (Windows PowerShell)
+7) start_web.bat 실행
+8) 브라우저에서 http://127.0.0.1:8000 열기
+
+[이 웹사이트에서 가능한 것]
+- TXT 여러 개 업로드
+- 하나 끝나면 다음 TXT 자동 처리
+- 배경 선택
+- 이미지 위치 조절
+- 자막 위치 조절
+- 자막 폰트 설정
+- 완료되면 MP4 / ZIP 자동 다운로드
+
+[주의]
+- 이 버전은 로컬 Helper를 없앤 Web Only 버전이라 CapCut Desktop 자동 export는 하지 않는다.
+- 대신 최종 MP4를 직접 렌더링해서 내려받게 만든다.
