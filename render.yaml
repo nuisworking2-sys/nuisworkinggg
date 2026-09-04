@@ -2,7 +2,7 @@ services:
   - type: web
     name: shorts-factory-web
     runtime: docker
-    plan: starter
+    plan: free
     autoDeploy: true
     healthCheckPath: /api/health
     envVars:
@@ -24,3 +24,4 @@ services:
         value: gpt-image-2
       - key: OPENAI_IMAGE_QUALITY
         value: medium
+
