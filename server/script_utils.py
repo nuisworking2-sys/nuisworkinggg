@@ -81,3 +81,34 @@ def make_srt(cues: Iterable[dict]) -> str:
             f"{idx}\n{srt_timestamp(int(cue['start_ms']))} --> {srt_timestamp(int(cue['end_ms']))}\n{cue['text']}"
         )
     return "\n\n".join(blocks) + "\n"
+
+
+def parse_srt(text: str) -> list[dict]:
+    """Parse ordinary SRT into text/start_ms/end_ms cues."""
+    timestamp = re.compile(
+        r"(?P<h>\d{1,2}):(?P<m>\d{2}):(?P<s>\d{2})[,.](?P<ms>\d{3})"
+    )
+
+    def to_ms(value: str) -> int:
+        match = timestamp.fullmatch(value.strip())
+        if not match:
+            raise ValueError(f"잘못된 SRT 시간 형식: {value}")
+        parts = {key: int(number) for key, number in match.groupdict().items()}
+        return ((parts["h"] * 60 + parts["m"]) * 60 + parts["s"]) * 1000 + parts["ms"]
+
+    cues: list[dict] = []
+    blocks = re.split(r"\n\s*\n", text.replace("\r\n", "\n").strip())
+    for block in blocks:
+        lines = [line.strip() for line in block.splitlines() if line.strip()]
+        if lines and lines[0].isdigit():
+            lines = lines[1:]
+        if len(lines) < 2 or "-->" not in lines[0]:
+            continue
+        start, end = (part.strip() for part in lines[0].split("-->", 1))
+        start_ms, end_ms = to_ms(start), to_ms(end)
+        if end_ms <= start_ms:
+            raise ValueError("SRT 종료 시간은 시작 시간보다 뒤여야 합니다.")
+        cues.append({"text": " ".join(lines[1:]), "start_ms": start_ms, "end_ms": end_ms})
+    if not cues:
+        raise ValueError("유효한 SRT 자막 구간을 찾지 못했습니다.")
+    return cues

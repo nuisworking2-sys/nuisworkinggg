@@ -162,3 +162,53 @@ def render_video_mp4(
             f"명령어: {' '.join(shlex.quote(c) for c in cmd)}\n\n"
             f"stderr:\n{e.stderr.decode('utf-8', errors='ignore')[-4000:]}"
         )
+
+
+def render_transparent_mov(
+    output_path: Path,
+    cues: list[dict],
+    image_dir: Path,
+    width: int = 1080,
+    height: int = 1920,
+    fps: int = 30,
+    image_x: int = 0,
+    image_y: int = 0,
+    image_scale: float = 0.72,
+) -> None:
+    """Render silent ProRes 4444 MOV while preserving PNG alpha."""
+    total_sec = max(0.1, max(int(cue["end_ms"]) for cue in cues) / 1000.0)
+    cmd = [
+        "ffmpeg", "-y", "-f", "lavfi", "-t", f"{total_sec:.3f}",
+        "-i", f"color=c=black@0.0:s={width}x{height}:r={fps},format=rgba",
+    ]
+    inputs: list[tuple[int, dict]] = []
+    for cue in cues:
+        image = image_dir / Path(str(cue["image"])).name
+        if not image.exists():
+            continue
+        input_index = len(inputs) + 1
+        cmd += ["-loop", "1", "-t", f"{total_sec:.3f}", "-i", str(image)]
+        inputs.append((input_index, cue))
+    filters = ["[0:v]format=rgba[base]"]
+    current = "base"
+    for input_index, cue in inputs:
+        name = f"v{input_index}"
+        start, end = int(cue["start_ms"]) / 1000, int(cue["end_ms"]) / 1000
+        filters.append(f"[{input_index}:v]format=rgba,scale=iw*{max(.05, image_scale)}:ih*{max(.05, image_scale)}[img{input_index}]")
+        filters.append(
+            f"[{current}][img{input_index}]overlay=(W-w)/2+{image_x}:(H-h)/2+{image_y}:"
+            f"enable='between(t,{start:.3f},{end:.3f})':format=auto[{name}]"
+        )
+        current = name
+    filters.append(f"[{current}]format=yuva444p10le[vout]")
+    cmd += [
+        "-filter_complex", ";".join(filters), "-map", "[vout]", "-an",
+        "-c:v", "prores_ks", "-profile:v", "4444", "-pix_fmt", "yuva444p10le",
+        "-alpha_bits", "16", "-r", str(fps), str(output_path),
+    ]
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(
+            "투명 MOV 렌더링 실패\n" + exc.stderr.decode("utf-8", errors="ignore")[-4000:]
+        ) from exc
